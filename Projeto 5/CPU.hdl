@@ -34,24 +34,36 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Registrador A
+    // Registrador A:
+    // Se for uma instrução do tipo A, deve ser carregada no registrador A;
+    // Se for uma do tipo C, caso o bit de destino d1 seja igual a 1,
+    // armazena a saída do ALU no registrador A
    
     Mux16(a=instruction, b=outALU, sel=instruction[15], out=inA);
     Not(in=instruction[15], out=not-instruction15);
     Or(a=not-instruction15, b=instruction[5], out=loadA);
     ARegister(in=inA, load=loadA, out=outA, out[0..14]=addressM);
 
-    // Registrador D
+    // Registrador D:
+    // Se for uma instrução do tipo C, caso o bit de destino d2 seja igual a 1,
+    // armazena a saída do ALU no registrador D
     
     And(a=instruction[15], b=instruction[4], out=loadD);
     DRegister(in=outALU, load=loadD, out=outD);
 
-    // ALU
+    
+    // ALU:
+    // D é uma das entradas do ALU
+    // e A é a outra se o bit a da instrução for igual a 0;
+    // se for igual a 1, M é a outra entrada do ALU
     
     Mux16(a=outA, b=inM, sel=instruction[12], out=A-or-M);
     ALU(x=outD, y=A-or-M, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=outALU, out=outM, zr=zrALU, ng=ngALU);
 
-    // PC
+    // PC:
+    // Se a condição de salto for verdadeira, PC será carregado com o endereço
+    // armazenado no registrador A;
+    // se não, o endereço no PC é incrementado;
     
     Or(a=ngALU, b=zrALU, out=ng-or-zrALU);
     Not(in=ng-or-zrALU, out=posALU);
@@ -62,6 +74,9 @@ CHIP CPU {
     Or(a=jump01, b=jump2, out=jump012);
     And(a=jump012, b=instruction[15], out=jump);
     PC(in=outA, load=jump, inc=true, reset=reset, out[0..14]=pc);
+
+    //Se esta for um instrução do tipo C, caso o bit de destino d3 seja 1,
+    //o valor da saída da ALU deve ser armazenado na memória; 
 
     And(a=instruction[15], b=instruction[3], out=writeM);
 }
