@@ -22,12 +22,21 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
+    
+    // Qual chip deve fornecer a entrada
+    // se o bit mais significativo for igual a zero, RAM
+    // se for igual a 1, dispositivo I/O
+    // o próximo bit se refere à tela;
+
+
     DMux4Way(in=load, sel=address[13..14], a=loadRAM0, b=loadRAM1, c=loadScreen);
     Or(a=loadRAM0, b=loadRAM1, out=loadRAM);
 
     RAM16K(in=in, load=loadRAM, address=address[0..13], out=outRAM);
     Screen(in=in, load=loadScreen, address=address[0..12], out=outScreen);
     Keyboard(out=outKeyboard);
+
+    // Qual chip deve fornecer a saída
 
     Mux4Way16(a=outRAM, b=outRAM, c=outScreen, d=outKeyboard, sel=address[13..14], out=out);
 }
